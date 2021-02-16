@@ -1,5 +1,5 @@
 #include <Adafruit_NeoPixel.h>
-const int serialBaud = 9600;
+// const int serialBaud = 9600;
 const int buttonPin = 2;
 const int numberOfPixels = 30;
 const int stripPin = 3;
@@ -8,7 +8,7 @@ int mode = 0;
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(numberOfPixels, stripPin, NEO_GRB + NEO_KHZ800);
 
 void setup() {
-  Serial.begin(serialBaud);
+  // Serial.begin(serialBaud);
   strip.begin();
   strip.show();
   pinMode(buttonPin, INPUT_PULLUP);  
