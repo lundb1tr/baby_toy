@@ -13,7 +13,11 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(numberOfPixels, stripPin, NEO_GRB + 
 void setup() {
   Serial.begin(serialBaud);
   strip.begin();
-  strip.show();
+  for (int index = strip.numPixels() - 1; index >= 0; index--) {
+    strip.setPixelColor(index, 0, 0, 255);
+    strip.show();
+    delay(20);
+  }
   receiver.enableIRIn();
   pinMode(buttonPin, INPUT_PULLUP);
 }
@@ -110,7 +114,7 @@ void determineStripAction(int mode) {
 }
 
 void letsGetObnoxious(int wait) {
-  if (wait > 10) {
+  if (wait > 0) {
     reverseColorWipe(strip.Color(0, 0, 0), wait);
     randomColors(wait);
     letsGetObnoxious(round(wait / 2));
