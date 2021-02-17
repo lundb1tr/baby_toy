@@ -33,7 +33,6 @@ void loop() {
     }
   } else {
     if (receiver.decode()) {
-      int command;
       receiver.stop();
       Serial.println(receiver.decodedIRData.command);
       if (receiver.decodedIRData.command != 0) {
