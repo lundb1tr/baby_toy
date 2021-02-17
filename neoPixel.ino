@@ -1,17 +1,21 @@
 #include <Adafruit_NeoPixel.h>
-// const int serialBaud = 9600;
+#include <IRremote.h>
+const int serialBaud = 9600;
 const int buttonPin = 2;
 const int numberOfPixels = 30;
 const int stripPin = 3;
-boolean oldState = HIGH;
+const int irPin = 11;
+int oldState = 1;
 int mode = 0;
+IRrecv receiver = IRrecv(irPin);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(numberOfPixels, stripPin, NEO_GRB + NEO_KHZ800);
 
 void setup() {
-  // Serial.begin(serialBaud);
+  Serial.begin(serialBaud);
   strip.begin();
   strip.show();
-  pinMode(buttonPin, INPUT_PULLUP);  
+  receiver.enableIRIn();
+  pinMode(buttonPin, INPUT_PULLUP);
 }
 
 void loop() {
@@ -21,45 +25,108 @@ void loop() {
     newState = digitalRead(buttonPin);
     if (newState == 0) {
       if (++mode > 8) mode = 0;
-      switch(mode) {
-        case 0:
-          reverseColorWipe(strip.Color(0, 0, 0), 50);
-          break;
-        case 1:
-          colorWipe(strip.Color(255, 0, 0), 50);
-          break;
-        case 2:
-          reverseColorWipe(strip.Color(0, 0, 0), 50);
-          colorWipe(strip.Color(0, 255, 0), 50);
-          break;
-        case 3:
-          reverseColorWipe(strip.Color(0, 0, 0), 50);
-          colorWipe(strip.Color(0, 0, 255), 50);
-          break;
-        case 4:
-          reverseColorWipe(strip.Color(0, 0, 0), 50);
-          theaterChase(strip.Color(127, 127, 127), 50);
-          break;
-        case 5:
-          reverseColorWipe(strip.Color(0, 0, 0), 50);
-          theaterChase(strip.Color(127, 0, 0), 50);
-          break;
-        case 6:
-          reverseColorWipe(strip.Color(0, 0, 0), 50);
-          theaterChase(strip.Color(0, 0, 127), 50);
-          break;
-        case 7:
-          reverseColorWipe(strip.Color(0, 0, 0), 50);
-          rainbow(10);
-          break;
-        case 8:
-          reverseColorWipe(strip.Color(0, 0, 0), 50);
-          theaterChaseRainbow(50);
-          break;
+      determineStripAction(mode);
+    }
+  } else {
+    if (receiver.decode()) {
+      int command;
+      receiver.stop();
+      Serial.println(receiver.decodedIRData.command);
+      if (receiver.decodedIRData.command != 0) {
+        mode = translateIrCommands(receiver.decodedIRData.command);
       }
+      determineStripAction(mode);
+      receiver.start();
     }
   }
   oldState = newState;
+}
+
+int translateIrCommands(int command) {
+  switch(command) {
+    case 22:
+      return 0;
+    case 12:
+      return 1;
+    case 24:
+      return 2;
+    case 94:
+      return 3;
+    case 8:
+      return 4;
+    case 28:
+      return 5;
+    case 90:
+      return 6;
+    case 66:
+      return 7;
+    case 82:
+      return 8;
+    default:
+      return 9;
+  }
+}
+
+void determineStripAction(int mode) {
+  switch(mode) {
+    case 0:
+      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      break;
+    case 1:
+      colorWipe(strip.Color(255, 0, 0), 50);
+      break;
+    case 2:
+      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      colorWipe(strip.Color(0, 255, 0), 50);
+      break;
+    case 3:
+      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      colorWipe(strip.Color(0, 0, 255), 50);
+      break;
+    case 4:
+      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      theaterChase(strip.Color(127, 127, 127), 50);
+      break;
+    case 5:
+      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      theaterChase(strip.Color(127, 0, 0), 50);
+      break;
+    case 6:
+      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      theaterChase(strip.Color(0, 0, 127), 50);
+      break;
+    case 7:
+      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      rainbow(10);
+      break;
+    case 8:
+      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      theaterChaseRainbow(50);
+      break;
+    case 9:
+      letsGetObnoxious(200);
+      break;
+  }
+}
+
+void letsGetObnoxious(int wait) {
+  if (wait > 10) {
+    reverseColorWipe(strip.Color(0, 0, 0), wait);
+    randomColors(wait);
+    letsGetObnoxious(round(wait / 2));
+  }
+}
+
+void randomColors(int wait) {
+  for (int index = 0; index < strip.numPixels(); index++) {
+    int red = random(0, 256);
+    int green = random(0, 256);
+    int blue = random(0, 256);
+    uint32_t color = strip.Color(red, green, blue);
+    strip.setPixelColor(index, color);
+    strip.show();
+    delay(wait);
+  }
 }
 
 void colorWipe(uint32_t color, int wait) {
@@ -93,9 +160,9 @@ void theaterChase(uint32_t color, int wait) {
 
 void rainbow(int wait) {
   for (long firstPixelHue = 0; firstPixelHue < 3 * 65536; firstPixelHue += 256) {
-    for (int i = 0; i < strip.numPixels(); i++) {
-      int pixelHue = firstPixelHue + (i * 65536L / strip.numPixels());
-      strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(pixelHue)));
+    for (int index = 0; index < strip.numPixels(); index++) {
+      int pixelHue = firstPixelHue + (index * 65536L / strip.numPixels());
+      strip.setPixelColor(index, strip.gamma32(strip.ColorHSV(pixelHue)));
     }
     strip.show();
     delay(wait);
