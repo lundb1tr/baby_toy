@@ -1,11 +1,15 @@
 #include <Adafruit_NeoPixel.h>
 #include <IRremote.h>
 const int serialBaud = 9600;
-const int buttonPin = 2;
+const int forwardButton = 2;
+const int repeatButton = 4;
+const int reverseButton = 7;
 const int numberOfPixels = 30;
 const int stripPin = 3;
 const int irPin = 11;
-int oldState = 1;
+int oldForwardState = 1;
+int oldRepeatState = 1;
+int oldReverseState = 1;
 int mode = 0;
 IRrecv receiver = IRrecv(irPin);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(numberOfPixels, stripPin, NEO_GRB + NEO_KHZ800);
@@ -20,30 +24,50 @@ void setup() {
     delay(20);
   }
   receiver.enableIRIn();
-  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(forwardButton, INPUT_PULLUP);
+  pinMode(repeatButton, INPUT_PULLUP);
+  pinMode(reverseButton, INPUT_PULLUP);
 }
 
 void loop() {
-  int newState = digitalRead(buttonPin);
-  if ((newState == 0) && (oldState == 1)) {
+  int newForwardState = digitalRead(forwardButton);
+  int newRepeatState = digitalRead(repeatButton);
+  int newReverseState = digitalRead(reverseButton);
+  bool goForward = ((newForwardState == 0) && (oldForwardState == 1));
+  bool repeat = ((newRepeatState == 0) && (oldRepeatState == 1));
+  bool reverse = ((newReverseState == 0) && (oldReverseState == 1));
+  if (goForward) {
     delay(20);
-    newState = digitalRead(buttonPin);
-    if (newState == 0) {
-      if (++mode > 8) mode = 0;
+    newForwardState = digitalRead(forwardButton);
+    if (newForwardState == 0) {
+      if (++mode > 12) mode = 0;
       determineStripAction(mode);
     }
-  } else {
-    if (receiver.decode()) {
+  } else if (receiver.decode()) {
       receiver.stop();
+    if (receiver.decodedIRData.command != 0) {
       Serial.println(receiver.decodedIRData.command);
-      if (receiver.decodedIRData.command != 0) {
         mode = translateIrCommands(receiver.decodedIRData.command);
       }
       determineStripAction(mode);
       receiver.start();
+  } else if (repeat) {
+    delay(20);
+    newRepeatState = digitalRead(repeatButton);
+    if (newRepeatState == 0) {
+      determineStripAction(mode);
+    }
+  } else if (reverse) {
+    delay(20);
+    newReverseState = digitalRead(reverseButton);
+    if (newReverseState == 0) {
+      if (--mode < 0) mode = 12;
+      determineStripAction(mode);
     }
   }
-  oldState = newState;
+  oldForwardState = newForwardState;
+  oldRepeatState = newRepeatState;
+  oldReverseState = newReverseState;
 }
 
 int translateIrCommands(int command) {
