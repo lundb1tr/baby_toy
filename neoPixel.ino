@@ -44,13 +44,13 @@ void loop() {
       determineStripAction(mode);
     }
   } else if (receiver.decode()) {
-      receiver.stop();
+    receiver.stop();
     if (receiver.decodedIRData.command != 0) {
       Serial.println(receiver.decodedIRData.command);
-        mode = translateIrCommands(receiver.decodedIRData.command);
-      }
-      determineStripAction(mode);
-      receiver.start();
+      mode = translateIrCommands(receiver.decodedIRData.command);
+    }
+    determineStripAction(mode);
+    receiver.start();
   } else if (repeat) {
     delay(20);
     newRepeatState = digitalRead(repeatButton);
