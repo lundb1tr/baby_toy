@@ -66,8 +66,14 @@ int translateIrCommands(int command) {
       return 7;
     case 82:
       return 8;
-    default:
+    case 74:
       return 9;
+    case 25:
+      return 10;
+    case 13:
+      return 11;
+    default:
+      return 12;
   }
 }
 
@@ -108,6 +114,18 @@ void determineStripAction(int mode) {
       theaterChaseRainbow(50);
       break;
     case 9:
+      reverseColorWipe(lightOff, 50);
+      singleChaseSolidColor(strip.Color(random(0, 256), random(0, 256), random(0, 256)), 25);
+      break;
+    case 10:
+      reverseColorWipe(lightOff, 25);
+      singleChaseRandomColor(25);
+      break;
+    case 11:
+      reverseColorWipe(lightOff, 25);
+      backAndForth(strip.Color(random(0, 256), random(0, 256), random(0, 256)), 25);
+      break;
+    case 12:
       reverseColorWipe(lightOff, 50);
       letsGetObnoxious(200);
       break;
@@ -187,6 +205,45 @@ void theaterChaseRainbow(int wait) {
       strip.show();
       delay(wait);
       firstPixelHue += 65536 / 90;
+    }
+  }
+}
+
+void singleChaseSolidColor(uint32_t color, int wait) {
+  for (int numberOfTries = 0; numberOfTries < 11; numberOfTries++) {
+    for (int index = strip.numPixels() - 1; index >= 0; index--) {
+      strip.setPixelColor(index, color);
+      strip.show();
+      delay(wait);
+      strip.setPixelColor(index, lightOff);
+    }
+  }
+}
+
+void singleChaseRandomColor(int wait) {
+  for (int numberOfTries = 0; numberOfTries <= 10; numberOfTries++) {
+    for (int index = strip.numPixels() - 1; index >= 0; index--) {
+      strip.setPixelColor(index, strip.Color(random(0, 256), random(0, 256), random(0, 256)));
+      strip.show();
+      delay(wait);
+      strip.setPixelColor(index, lightOff);
+    }
+  }
+}
+
+void backAndForth(uint32_t color, int wait) {
+  for (int numberOfTries = 0; numberOfTries <= 10; numberOfTries++) {
+    for (int index = strip.numPixels() - 1; index >= 0; index--) {
+      strip.setPixelColor(index, color);
+      strip.show();
+      delay(wait);
+      strip.setPixelColor(index, lightOff);
+    }
+    for (int index = 0; index < strip.numPixels(); index++) {
+      strip.setPixelColor(index, strip.gamma32(color));
+      strip.show();
+      delay(wait);
+      strip.setPixelColor(index, lightOff);
     }
   }
 }
