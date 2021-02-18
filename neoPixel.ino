@@ -40,7 +40,7 @@ void loop() {
     delay(20);
     newForwardState = digitalRead(forwardButton);
     if (newForwardState == 0) {
-      if (++mode > 12) mode = 0;
+      if (++mode > 13) mode = 0;
       determineStripAction(mode);
     }
   } else if (receiver.decode()) {
@@ -96,8 +96,10 @@ int translateIrCommands(int command) {
       return 10;
     case 13:
       return 11;
-    default:
+    case 7:
       return 12;
+    default:
+      return 13;
   }
 }
 
@@ -151,8 +153,11 @@ void determineStripAction(int mode) {
       break;
     case 12:
       reverseColorWipe(lightOff, 50);
-      letsGetObnoxious(200);
+      inAndOut(strip.Color(128, 0, 255));
       break;
+    default:
+      reverseColorWipe(lightOff, 50);
+      letsGetObnoxious(25);
   }
 }
 
@@ -268,6 +273,29 @@ void backAndForth(uint32_t color, int wait) {
       strip.show();
       delay(wait);
       strip.setPixelColor(index, lightOff);
+    }
+  }
+}
+
+void inAndOut(uint32_t color) {
+  for (int numberOfTries = 0; numberOfTries <= 10; numberOfTries++) {
+    for (int secondHalf = strip.numPixels() - 1; secondHalf > 14; secondHalf--) {
+      int difference = strip.numPixels() - secondHalf;
+      strip.setPixelColor(secondHalf, color);
+      strip.setPixelColor(difference - 1, color);
+      strip.show();
+      delay(100);
+      strip.setPixelColor(secondHalf, lightOff);
+      strip.setPixelColor(difference -1, lightOff);
+    }
+    for (int secondHalf = 15; secondHalf <= strip.numPixels() - 1; secondHalf++) {
+      int difference = strip.numPixels() - secondHalf;
+      strip.setPixelColor(secondHalf, color);
+      strip.setPixelColor(difference - 1, color);
+      strip.show();
+      delay(25);
+      strip.setPixelColor(secondHalf, lightOff);
+      strip.setPixelColor(difference - 1, lightOff);
     }
   }
 }
