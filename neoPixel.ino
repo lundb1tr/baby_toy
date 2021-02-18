@@ -9,6 +9,7 @@ int oldState = 1;
 int mode = 0;
 IRrecv receiver = IRrecv(irPin);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(numberOfPixels, stripPin, NEO_GRB + NEO_KHZ800);
+const uint32_t lightOff = strip.Color(0, 0, 0);
 
 void setup() {
   Serial.begin(serialBaud);
@@ -73,40 +74,41 @@ int translateIrCommands(int command) {
 void determineStripAction(int mode) {
   switch(mode) {
     case 0:
-      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      reverseColorWipe(lightOff, 50);
       break;
     case 1:
       colorWipe(strip.Color(255, 0, 0), 50);
       break;
     case 2:
-      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      reverseColorWipe(lightOff, 50);
       colorWipe(strip.Color(0, 255, 0), 50);
       break;
     case 3:
-      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      reverseColorWipe(lightOff, 50);
       colorWipe(strip.Color(0, 0, 255), 50);
       break;
     case 4:
-      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      reverseColorWipe(lightOff, 50);
       theaterChase(strip.Color(127, 127, 127), 50);
       break;
     case 5:
-      reverseColorWipe(strip.Color(0, 0, 0), 50);
-      theaterChase(strip.Color(127, 0, 0), 50);
+      reverseColorWipe(lightOff, 50);
+      theaterChase(strip.Color(128, 0, 255), 50);
       break;
     case 6:
-      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      reverseColorWipe(lightOff, 50);
       theaterChase(strip.Color(0, 0, 127), 50);
       break;
     case 7:
-      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      reverseColorWipe(lightOff, 50);
       rainbow(10);
       break;
     case 8:
-      reverseColorWipe(strip.Color(0, 0, 0), 50);
+      reverseColorWipe(lightOff, 50);
       theaterChaseRainbow(50);
       break;
     case 9:
+      reverseColorWipe(lightOff, 50);
       letsGetObnoxious(200);
       break;
   }
@@ -114,8 +116,8 @@ void determineStripAction(int mode) {
 
 void letsGetObnoxious(int wait) {
   if (wait > 0) {
-    reverseColorWipe(strip.Color(0, 0, 0), wait);
     randomColors(wait);
+    reverseColorWipe(lightOff, wait);
     letsGetObnoxious(round(wait / 2));
   }
 }
