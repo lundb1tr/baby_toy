@@ -15,7 +15,7 @@ void setup() {
   Serial.begin(serialBaud);
   strip.begin();
   for (int index = strip.numPixels() - 1; index >= 0; index--) {
-    strip.setPixelColor(index, 0, 0, 255);
+    strip.setPixelColor(index, 128, 0, 255);
     strip.show();
     delay(20);
   }
@@ -83,7 +83,7 @@ void determineStripAction(int mode) {
       reverseColorWipe(lightOff, 50);
       break;
     case 1:
-      colorWipe(strip.Color(255, 0, 0), 50);
+      colorWipe(strip.Color(128, 0, 255), 50);
       break;
     case 2:
       reverseColorWipe(lightOff, 50);
