@@ -1,44 +1,62 @@
 #include <Adafruit_NeoPixel.h>
 #include <IRremote.h>
 const int serialBaud = 9600;
-const int forwardButton = 2;
-const int repeatButton = 4;
-const int reverseButton = 7;
-const int numberOfPixels = 30;
-const int stripPin = 3;
+const int forwardButtonPin = 2;
+const int rgbStripPin = 3;
+const int repeatButtonPin = 4;
+const int forwardLedPin = 5;
+const int reverseButtonPin = 7;
 const int irPin = 11;
+const int numberOfPixels = 30;
 int oldForwardState = 1;
 int oldRepeatState = 1;
 int oldReverseState = 1;
 int mode = 0;
 IRrecv receiver = IRrecv(irPin);
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(numberOfPixels, stripPin, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel forwardButtonLed = Adafruit_NeoPixel(1, forwardLedPin, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800);
+/* Should work to power 4 strips once purchased and wired up */
+// Adafruit_NeoPixel stripArray[4] = [Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800), Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800), Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800), Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800)];
+/* Should work to power 4 strips once purchased and wired up */
+// const uint32_t lightOff = stripArray[0].Color(0, 0, 0);
 const uint32_t lightOff = strip.Color(0, 0, 0);
 
 void setup() {
   Serial.begin(serialBaud);
+  /* Should work to power 4 strips once purchased and wired up */
+  // for (int stripNumber = stripArray.length - 1; stripNumber >= 0; stripNumber--) {
+  //   stripArray[stripNumber].begin();
+  //   for (int index = stripArray[stripNumber].numPixels() - 1; index >= 0; index--) {
+  //     stripArray[stripNumber].setPixelColor(index, 128, 0, 255);
+  //     stripArray[stripNumber].show();
+  //     delay(20);
+  //   }
+  // }
   strip.begin();
   for (int index = strip.numPixels() - 1; index >= 0; index--) {
     strip.setPixelColor(index, 128, 0, 255);
     strip.show();
     delay(20);
   }
+  forwardButtonLed.begin();
+  forwardButtonLed.setPixelColor(0, 120, 0, 255);
+  forwardButtonLed.show();
   receiver.enableIRIn();
-  pinMode(forwardButton, INPUT_PULLUP);
-  pinMode(repeatButton, INPUT_PULLUP);
-  pinMode(reverseButton, INPUT_PULLUP);
+  pinMode(forwardButtonPin, INPUT_PULLUP);
+  pinMode(repeatButtonPin, INPUT_PULLUP);
+  pinMode(reverseButtonPin, INPUT_PULLUP);
 }
 
 void loop() {
-  int newForwardState = digitalRead(forwardButton);
-  int newRepeatState = digitalRead(repeatButton);
-  int newReverseState = digitalRead(reverseButton);
+  int newForwardState = digitalRead(forwardButtonPin);
+  int newRepeatState = digitalRead(repeatButtonPin);
+  int newReverseState = digitalRead(reverseButtonPin);
   bool goForward = ((newForwardState == 0) && (oldForwardState == 1));
   bool repeat = ((newRepeatState == 0) && (oldRepeatState == 1));
   bool reverse = ((newReverseState == 0) && (oldReverseState == 1));
   if (goForward) {
     delay(20);
-    newForwardState = digitalRead(forwardButton);
+    newForwardState = digitalRead(forwardButtonPin);
     if (newForwardState == 0) {
       if (++mode > 13) mode = 0;
       determineStripAction(mode);
@@ -53,13 +71,13 @@ void loop() {
     receiver.start();
   } else if (repeat) {
     delay(20);
-    newRepeatState = digitalRead(repeatButton);
+    newRepeatState = digitalRead(repeatButtonPin);
     if (newRepeatState == 0) {
       determineStripAction(mode);
     }
   } else if (reverse) {
     delay(20);
-    newReverseState = digitalRead(reverseButton);
+    newReverseState = digitalRead(reverseButtonPin);
     if (newReverseState == 0) {
       if (--mode < 0) mode = 12;
       determineStripAction(mode);
@@ -215,7 +233,9 @@ void rainbow(int wait) {
     for (int index = 0; index < strip.numPixels(); index++) {
       int pixelHue = firstPixelHue + (index * 65536L / strip.numPixels());
       strip.setPixelColor(index, strip.gamma32(strip.ColorHSV(pixelHue)));
+      forwardButtonLed.setPixelColor(0, strip.gamma32(strip.ColorHSV(pixelHue)));
     }
+    forwardButtonLed.show();
     strip.show();
     delay(wait);
   }
