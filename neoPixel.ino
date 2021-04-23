@@ -1,16 +1,9 @@
 #include <Adafruit_NeoPixel.h>
 #include <IRremote.h>
 const int serialBaud = 9600;
-const int forwardButtonPin = 2;
 const int rgbStripPin = 3;
-const int repeatButtonPin = 4;
-const int forwardLedPin = 5;
-const int reverseButtonPin = 7;
 const int irPin = 11;
 const int numberOfPixels = 120;
-int oldForwardState = 1;
-int oldRepeatState = 1;
-int oldReverseState = 1;
 int mode = 0;
 int red = 255;
 int green = 255;
@@ -18,69 +11,24 @@ int blue = 255;
 int fakeDelay = 0;
 bool increment = true;
 IRrecv receiver = IRrecv(irPin);
-Adafruit_NeoPixel forwardButtonLed = Adafruit_NeoPixel(1, forwardLedPin, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800);
-/* Should work to power 4 strips once purchased and wired up */
-// Adafruit_NeoPixel stripArray[4] = [Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800), Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800), Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800), Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800)];
-/* Should work to power 4 strips once purchased and wired up */
-// const uint32_t lightOff = stripArray[0].Color(0, 0, 0);
 const uint32_t lightOff = strip.Color(0, 0, 0);
 const uint32_t theGoodStuff = strip.gamma32(strip.Color(255, 132, 108));
 
 void setup() {
   Serial.begin(serialBaud);
-  /* Should work to power 4 strips once purchased and wired up */
-  // for (int stripNumber = stripArray.length - 1; stripNumber >= 0; stripNumber--) {
-  //   stripArray[stripNumber].begin();
-  //   for (int index = stripArray[stripNumber].numPixels() - 1; index >= 0; index--) {
-  //     stripArray[stripNumber].setPixelColor(index, 128, 0, 255);
-  //     stripArray[stripNumber].show();
-  //     delay(20);
-  //   }
-  // }
   strip.begin();
-  strip.setBrightness(25);
+  strip.setBrightness(255);
   for (int index = strip.numPixels() - 1; index >= 0; index--) {
     strip.setPixelColor(index, theGoodStuff);
     strip.show();
     delay(20);
   }
-  // forwardButtonLed.begin();
-  // forwardButtonLed.setPixelColor(0, red, green, blue);
-  // forwardButtonLed.show();
   receiver.enableIRIn();
-  pinMode(forwardButtonPin, INPUT_PULLUP);
-  pinMode(repeatButtonPin, INPUT_PULLUP);
-  pinMode(reverseButtonPin, INPUT_PULLUP);
 }
 
 void loop() {
-  // if (fakeDelay == 20) {
-  //   fakeDelay = 0;
-  //   if (increment == true) {
-  //     incrementButtonColors();
-  //   } else {
-  //     decrementButtonColors();
-  //   }
-  // } else {
-  //   fakeDelay++;
-  // }
-  // forwardButtonLed.setPixelColor(0, red, green, blue);
-  // forwardButtonLed.show();
-  int newForwardState = digitalRead(forwardButtonPin);
-  int newRepeatState = digitalRead(repeatButtonPin);
-  int newReverseState = digitalRead(reverseButtonPin);
-  bool goForward = ((newForwardState == 0) && (oldForwardState == 1));
-  bool repeat = ((newRepeatState == 0) && (oldRepeatState == 1));
-  bool reverse = ((newReverseState == 0) && (oldReverseState == 1));
-  if (goForward) {
-    delay(20);
-    newForwardState = digitalRead(forwardButtonPin);
-    if (newForwardState == 0) {
-      if (++mode > 13) mode = 0;
-      determineStripAction(mode);
-    }
-  } else if (receiver.decode()) {
+  if (receiver.decode()) {
     receiver.stop();
     if (receiver.decodedIRData.command != 0) {
       Serial.println(receiver.decodedIRData.command);
@@ -88,42 +36,6 @@ void loop() {
     }
     determineStripAction(mode);
     receiver.start();
-  } else if (repeat) {
-    delay(20);
-    newRepeatState = digitalRead(repeatButtonPin);
-    if (newRepeatState == 0) {
-      determineStripAction(mode);
-    }
-  } else if (reverse) {
-    delay(20);
-    newReverseState = digitalRead(reverseButtonPin);
-    if (newReverseState == 0) {
-      if (--mode < 0) mode = 12;
-      determineStripAction(mode);
-    }
-  }
-  oldForwardState = newForwardState;
-  oldRepeatState = newRepeatState;
-  oldReverseState = newReverseState;
-}
-
-void incrementButtonColors() {
-  if (green < 255 && red == 0) {
-    green++;
-  } else if (green == 255 && red < 255) {
-    red++;
-  } else {
-    increment = false;
-  }
-}
-
-void decrementButtonColors() {
-  if (green == 255 && red > 0) {
-    red--;
-  } else if (red == 0 & green > 0) {
-    green--;
-  } else {
-    increment = true;
   }
 }
 
@@ -272,9 +184,7 @@ void rainbow(int wait) {
     for (int index = 0; index < strip.numPixels(); index++) {
       int pixelHue = firstPixelHue + (index * 65536L / strip.numPixels());
       strip.setPixelColor(index, strip.gamma32(strip.ColorHSV(pixelHue)));
-      forwardButtonLed.setPixelColor(0, strip.gamma32(strip.ColorHSV(pixelHue)));
     }
-    forwardButtonLed.show();
     strip.show();
     delay(wait);
   }
