@@ -7,11 +7,16 @@ const int repeatButtonPin = 4;
 const int forwardLedPin = 5;
 const int reverseButtonPin = 7;
 const int irPin = 11;
-const int numberOfPixels = 30;
+const int numberOfPixels = 120;
 int oldForwardState = 1;
 int oldRepeatState = 1;
 int oldReverseState = 1;
 int mode = 0;
+int red = 255;
+int green = 255;
+int blue = 255;
+int fakeDelay = 0;
+bool increment = true;
 IRrecv receiver = IRrecv(irPin);
 Adafruit_NeoPixel forwardButtonLed = Adafruit_NeoPixel(1, forwardLedPin, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB + NEO_KHZ800);
@@ -20,6 +25,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(numberOfPixels, rgbStripPin, NEO_GRB
 /* Should work to power 4 strips once purchased and wired up */
 // const uint32_t lightOff = stripArray[0].Color(0, 0, 0);
 const uint32_t lightOff = strip.Color(0, 0, 0);
+const uint32_t theGoodStuff = strip.gamma32(strip.Color(255, 132, 108));
 
 void setup() {
   Serial.begin(serialBaud);
@@ -33,14 +39,15 @@ void setup() {
   //   }
   // }
   strip.begin();
+  strip.setBrightness(25);
   for (int index = strip.numPixels() - 1; index >= 0; index--) {
-    strip.setPixelColor(index, 128, 0, 255);
+    strip.setPixelColor(index, theGoodStuff);
     strip.show();
     delay(20);
   }
-  forwardButtonLed.begin();
-  forwardButtonLed.setPixelColor(0, 120, 0, 255);
-  forwardButtonLed.show();
+  // forwardButtonLed.begin();
+  // forwardButtonLed.setPixelColor(0, red, green, blue);
+  // forwardButtonLed.show();
   receiver.enableIRIn();
   pinMode(forwardButtonPin, INPUT_PULLUP);
   pinMode(repeatButtonPin, INPUT_PULLUP);
@@ -48,6 +55,18 @@ void setup() {
 }
 
 void loop() {
+  // if (fakeDelay == 20) {
+  //   fakeDelay = 0;
+  //   if (increment == true) {
+  //     incrementButtonColors();
+  //   } else {
+  //     decrementButtonColors();
+  //   }
+  // } else {
+  //   fakeDelay++;
+  // }
+  // forwardButtonLed.setPixelColor(0, red, green, blue);
+  // forwardButtonLed.show();
   int newForwardState = digitalRead(forwardButtonPin);
   int newRepeatState = digitalRead(repeatButtonPin);
   int newReverseState = digitalRead(reverseButtonPin);
@@ -88,36 +107,56 @@ void loop() {
   oldReverseState = newReverseState;
 }
 
+void incrementButtonColors() {
+  if (green < 255 && red == 0) {
+    green++;
+  } else if (green == 255 && red < 255) {
+    red++;
+  } else {
+    increment = false;
+  }
+}
+
+void decrementButtonColors() {
+  if (green == 255 && red > 0) {
+    red--;
+  } else if (red == 0 & green > 0) {
+    green--;
+  } else {
+    increment = true;
+  }
+}
+
 int translateIrCommands(int command) {
   switch(command) {
-    case 22:
+    case 17:
       return 0;
-    case 12:
+    case 4:
       return 1;
-    case 24:
+    case 5:
       return 2;
-    case 94:
+    case 6:
       return 3;
     case 8:
       return 4;
-    case 28:
+    case 9:
       return 5;
-    case 90:
+    case 10:
       return 6;
-    case 66:
+    case 12:
       return 7;
-    case 82:
-      return 8;
-    case 74:
-      return 9;
-    case 25:
-      return 10;
     case 13:
+      return 8;
+    case 14:
+      return 9;
+    case 35:
+      return 10;
+    case 19:
       return 11;
-    case 7:
+    case 15:
       return 12;
     default:
-      return 13;
+      return 2;
   }
 }
 
@@ -131,7 +170,7 @@ void determineStripAction(int mode) {
       break;
     case 2:
       reverseColorWipe(lightOff, 50);
-      colorWipe(strip.Color(0, 255, 0), 50);
+      colorWipe(theGoodStuff, 50);
       break;
     case 3:
       reverseColorWipe(lightOff, 50);
@@ -139,7 +178,7 @@ void determineStripAction(int mode) {
       break;
     case 4:
       reverseColorWipe(lightOff, 50);
-      theaterChase(strip.Color(127, 127, 127), 50);
+      theaterChase(theGoodStuff, 50);
       break;
     case 5:
       reverseColorWipe(lightOff, 50);
@@ -159,7 +198,7 @@ void determineStripAction(int mode) {
       break;
     case 9:
       reverseColorWipe(lightOff, 50);
-      singleChaseSolidColor(strip.Color(random(0, 256), random(0, 256), random(0, 256)), 25);
+      singleChaseSolidColor(theGoodStuff, 25);
       break;
     case 10:
       reverseColorWipe(lightOff, 25);
@@ -167,11 +206,11 @@ void determineStripAction(int mode) {
       break;
     case 11:
       reverseColorWipe(lightOff, 25);
-      backAndForth(strip.Color(random(0, 256), random(0, 256), random(0, 256)), 25);
+      backAndForth(theGoodStuff, 25);
       break;
     case 12:
       reverseColorWipe(lightOff, 50);
-      inAndOut(strip.Color(128, 0, 255));
+      inAndOut(theGoodStuff);
       break;
     default:
       reverseColorWipe(lightOff, 50);
@@ -272,7 +311,7 @@ void singleChaseSolidColor(uint32_t color, int wait) {
 void singleChaseRandomColor(int wait) {
   for (int numberOfTries = 0; numberOfTries <= 10; numberOfTries++) {
     for (int index = strip.numPixels() - 1; index >= 0; index--) {
-      strip.setPixelColor(index, strip.Color(random(0, 256), random(0, 256), random(0, 256)));
+      strip.setPixelColor(index, strip.gamma32(strip.Color(random(0, 256), random(0, 256), random(0, 256))));
       strip.show();
       delay(wait);
       strip.setPixelColor(index, lightOff);
